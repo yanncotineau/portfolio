@@ -1,103 +1,88 @@
-import Image from "next/image";
+import Navbar from "@/components/navbar/NavBar";
+import AboutSection from "@/components/sections/about/AboutSection";
+import BlogSection from "@/components/sections/blog/BlogSection";
+import ContactSection from "@/components/sections/contact/ContactSection";
+import ExperienceSection from "@/components/sections/experience/ExperienceSection";
+import SkillsSection from "@/components/sections/skills/SkillsSection";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+      <Navbar />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Dummy content – replace later with your sections */}
+      <section id="home" className="relative">
+        <div className="relative isolate overflow-hidden">
+          <img
+            src="https://images.unsplash.com/photo-1527443154391-507e9dc6c5cc?q=80&w=2000&auto=format&fit=crop"
+            alt=""
+            className="absolute inset-0 -z-10 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-white/80 via-white/50 to-white dark:from-slate-950/80 dark:via-slate-950/50 dark:to-slate-950" />
+
+          {/* Floating blobs */}
+          <div className="pointer-events-none absolute -top-10 left-10 h-48 w-48 rounded-full bg-emerald-400/30 blur-3xl animate-blob" />
+          <div
+            className="pointer-events-none absolute top-24 right-10 h-56 w-56 rounded-full bg-indigo-400/30 blur-3xl animate-blob"
+            style={{ animationDelay: "-4s" }}
+          />
+          <div
+            className="pointer-events-none absolute -bottom-10 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-fuchsia-400/30 blur-3xl animate-blob"
+            style={{ animationDelay: "-8s" }}
+          />
+
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-black/5 backdrop-blur dark:bg-white/10 dark:text-slate-200 dark:ring-white/10">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Ships fast • Obsessive about details • Impact focused
+            </p>
+
+            <h1 className="mt-6 max-w-4xl text-3xl sm:text-5xl md:text-6xl font-semibold tracking-tight">
+              Full-Stack Engineer building robust web platforms &{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-emerald-500">
+                AI-powered
+              </span>{" "}
+              experiences.
+            </h1>
+
+            <p className="mt-4 max-w-2xl text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
+              I design, build, and scale apps across the stack — React/Next, Node/Express, Postgres/Redis — and explore
+              emerging tech like LLMs, RAG pipelines, vector search, and realtime UIs.
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a href="#projects" className="rounded-lg bg-slate-900 px-4 py-2 text-white dark:bg-white dark:text-slate-900">
+                See Projects
+              </a>
+              <a href="#contact" className="rounded-lg px-4 py-2 ring-1 ring-slate-900/10 dark:ring-white/10">
+                Get in touch
+              </a>
+            </div>
+
+            <div className="mt-10 grid grid-cols-3 max-w-md text-center text-sm">
+              <div className="p-3 rounded-lg ring-1 ring-slate-900/10 dark:ring-white/10 bg-white/40 dark:bg-white/5">
+                <div className="text-2xl font-semibold">20+</div>
+                <div className="text-slate-500">Projects shipped</div>
+              </div>
+              <div className="p-3 rounded-lg ring-1 ring-slate-900/10 dark:ring-white/10 bg-white/40 dark:bg-white/5">
+                <div className="text-2xl font-semibold">~10ms</div>
+                <div className="text-slate-500">API p95 targets</div>
+              </div>
+              <div className="p-3 rounded-lg ring-1 ring-slate-900/10 dark:ring-white/10 bg-white/40 dark:bg-white/5">
+                <div className="text-2xl font-semibold">LLM</div>
+                <div className="text-slate-500">RAG · Vector · Tools</div>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </section>
+
+      {/* Sections */}
+      <AboutSection />
+      <SkillsSection />
+      <BlogSection />
+      <ExperienceSection />
+      <ContactSection />
+    </>
   );
 }
