@@ -1,13 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
-// R3F scene (no SSR)
 const SkillsScene = dynamic(() => import("./SkillsScene"), { ssr: false });
 
-// ----- Demo data -----
+// --- Demo data ---
 const CATEGORIES = [
   {
     name: "Frontend",
@@ -78,86 +77,85 @@ export default function SkillsSection() {
   const currCards = CATEGORIES[categoryIndex].cards;
   const lastCategory = CATEGORIES.length - 1;
 
-  // Left / Right → slide the row (cards move; title fixed)
-  const prevCard = () => setCardIndex((i) => (i - 1 + currCards.length) % currCards.length);
-  const nextCard = () => setCardIndex((i) => (i + 1) % currCards.length);
+  // Arrow enable/disable + handlers (no wraparound)
+  const canPrevCard = cardIndex > 0;
+  const canNextCard = cardIndex < currCards.length - 1;
+  const prevCard = () => canPrevCard && setCardIndex((i) => i - 1);
+  const nextCard = () => canNextCard && setCardIndex((i) => i + 1);
 
-  // Non-passive wheel handling on the container so we can truly prevent page scrolling
+  // Wheel & drag: always capture and prevent page scroll while over the card
   const containerRef = useRef<HTMLDivElement>(null);
   const catRef = useRef(categoryIndex);
   const lastWheelAt = useRef(0);
 
   useEffect(() => { catRef.current = categoryIndex; }, [categoryIndex]);
 
+  // Wheel → category
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const onWheel = (e: WheelEvent) => {
+      e.preventDefault(); // never let page scroll while on the card
       const now = performance.now();
-      const dir = e.deltaY > 0 ? 1 : -1; // down = next category
-      const idx = catRef.current;
-
-      const atTop = idx === 0;
-      const atBottom = idx === lastCategory;
-      const canGo = (dir > 0 && !atBottom) || (dir < 0 && !atTop);
-
-      if (canGo) {
-        e.preventDefault(); // block page scroll
-        // one step per ~140ms to feel crisp on trackpads
-        if (now - lastWheelAt.current > 140) {
-          setCategoryIndex((prev) => clamp(prev + dir, 0, lastCategory));
-          setCardIndex(0);
-          lastWheelAt.current = now;
-        }
-      } else {
-        // At an edge → allow page to scroll (do NOT preventDefault)
-      }
+      if (now - lastWheelAt.current < 120) return;
+      const dir = e.deltaY > 0 ? 1 : -1; // down → next
+      setCategoryIndex((prev) => clamp(prev + dir, 0, lastCategory));
+      setCardIndex(0);
+      lastWheelAt.current = now;
     };
 
-    // critical: passive:false so preventDefault actually works
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel as any);
   }, [lastCategory]);
 
-  // (Optional) touch scrolling inside the scene with the same edge logic
+  // Mouse drag down/up inside the card → category
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
+    let dragging = false;
     let startY = 0;
-    let moved = false;
+    let accum = 0;
+    const STEP = 70; // px per category step
 
-    const onTouchStart = (e: TouchEvent) => {
-      startY = e.touches[0].clientY;
-      moved = false;
+    const onPointerDown = (e: PointerEvent) => {
+      dragging = true;
+      startY = e.clientY;
+      accum = 0;
+      (e.target as Element).setPointerCapture?.(e.pointerId);
+      document.body.style.userSelect = "none";
     };
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragging) return;
+      e.preventDefault();
+      const dy = e.clientY - startY; // drag down → positive → next category
+      startY = e.clientY;
+      accum += dy;
 
-    const onTouchMove = (e: TouchEvent) => {
-      const dy = startY - e.touches[0].clientY; // >0 means swipe up → next category
-      if (Math.abs(dy) < 8) return;
-      const dir = dy > 0 ? 1 : -1;
-
-      const idx = catRef.current;
-      const atTop = idx === 0;
-      const atBottom = idx === lastCategory;
-      const canGo = (dir > 0 && !atBottom) || (dir < 0 && !atTop);
-
-      if (canGo) {
-        e.preventDefault();
-        if (!moved) {
-          setCategoryIndex((prev) => clamp(prev + dir, 0, lastCategory));
-          setCardIndex(0);
-          moved = true;
-        }
+      while (Math.abs(accum) >= STEP) {
+        const dir = accum > 0 ? 1 : -1;
+        setCategoryIndex((prev) => clamp(prev + dir, 0, lastCategory));
+        setCardIndex(0);
+        accum -= STEP * dir;
       }
     };
+    const onPointerUp = (e: PointerEvent) => {
+      dragging = false;
+      accum = 0;
+      document.body.style.userSelect = "";
+      (e.target as Element).releasePointerCapture?.(e.pointerId);
+    };
 
-    el.addEventListener("touchstart", onTouchStart, { passive: true });
-    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("pointerdown", onPointerDown, { passive: true });
+    el.addEventListener("pointermove", onPointerMove, { passive: false });
+    el.addEventListener("pointerup", onPointerUp, { passive: true });
+    el.addEventListener("pointercancel", onPointerUp, { passive: true });
     return () => {
-      el.removeEventListener("touchstart", onTouchStart as any);
-      el.removeEventListener("touchmove", onTouchMove as any);
+      el.removeEventListener("pointerdown", onPointerDown as any);
+      el.removeEventListener("pointermove", onPointerMove as any);
+      el.removeEventListener("pointerup", onPointerUp as any);
+      el.removeEventListener("pointercancel", onPointerUp as any);
     };
   }, [lastCategory]);
 
@@ -185,12 +183,14 @@ export default function SkillsSection() {
         className="relative mt-5 rounded-2xl ring-1 ring-slate-900/10 dark:ring-white/10 bg-white/60 dark:bg-white/5 overflow-hidden"
         style={{ touchAction: "none" }}
       >
-        {/* Buttons on top of canvas so clicks never hit the card */}
+        {/* Arrows above canvas (no click-through); disabled at ends */}
         <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-between px-3">
           <button
             onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
             onClick={(e) => { e.stopPropagation(); prevCard(); }}
-            className="pointer-events-auto rounded-full p-2 bg-white/70 dark:bg-slate-900/70 ring-1 ring-black/10 dark:ring-white/10 hover:brightness-105"
+            disabled={!canPrevCard}
+            className="pointer-events-auto rounded-full p-2 bg-white/70 dark:bg-slate-900/70 ring-1 ring-black/10 dark:ring-white/10 hover:brightness-105
+                       cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Previous"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -198,7 +198,9 @@ export default function SkillsSection() {
           <button
             onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
             onClick={(e) => { e.stopPropagation(); nextCard(); }}
-            className="pointer-events-auto rounded-full p-2 bg-white/70 dark:bg-slate-900/70 ring-1 ring-black/10 dark:ring-white/10 hover:brightness-105"
+            disabled={!canNextCard}
+            className="pointer-events-auto rounded-full p-2 bg-white/70 dark:bg-slate-900/70 ring-1 ring-black/10 dark:ring-white/10 hover:brightness-105
+                       cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Next"
           >
             <ChevronRight className="h-5 w-5" />

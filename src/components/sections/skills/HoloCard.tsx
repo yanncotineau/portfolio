@@ -1,11 +1,11 @@
 "use client";
 
-import { shaderMaterial } from "@react-three/drei";
+import { shaderMaterial, useCursor } from "@react-three/drei";
 import { extend, ReactThreeFiber, useFrame } from "@react-three/fiber";
 import React, { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-/** Holographic foil shader; pointer hotspot + fresnel; mask-ready */
+/** Holographic foil shader; uniform hotspot + fresnel; mask-ready */
 const HoloMaterial = shaderMaterial(
   {
     u_time: 0,
@@ -68,7 +68,7 @@ const HoloMaterial = shaderMaterial(
     // dim when not active row
     color = mix(color, color * 0.6, u_dim);
 
-    // gentle edge glow; no clipping
+    // edge glow (no clipping)
     float edge = smoothstep(0.985, 0.92, max(max(vUv.x, 1.0-vUv.x), max(vUv.y, 1.0-vUv.y)));
     color += vec3(0.10,0.16,0.22) * edge * 0.22;
 
@@ -107,6 +107,9 @@ export default function HoloCard({
   const group = useRef<THREE.Group>(null!);
   const [hovered, setHovered] = useState(false);
 
+  // Pointer cursor on hover
+  useCursor(interactive && hovered, "pointer", "auto");
+
   // Rounded card geometry
   const geometry = useMemo(() => {
     const shape = new THREE.Shape();
@@ -132,18 +135,20 @@ export default function HoloCard({
   useFrame((_s, dt) => {
     if (material.current) {
       material.current.u_time += dt;
-      material.current.u_hover = THREE.MathUtils.damp(material.current.u_hover, hovered ? 1 : 0, 4, dt);
-      material.current.u_pointer.lerp(targetUV.current, 0.22); // smooth hotspot
+      material.current.u_hover = THREE.MathUtils.damp(material.current.u_hover, hovered ? 1 : 0, 8, dt);
+      material.current.u_pointer.lerp(targetUV.current, 0.30); // faster hotspot follow
       material.current.u_dim = dimmed ? 1 : 0;
     }
     if (group.current) {
-      // smooth, no-clip tilt toward pointer (small angles)
-      const dx = targetUV.current.x - 0.5;
-      const dy = targetUV.current.y - 0.5;
-      const rx = hovered ? -dy * 0.22 : 0;
-      const ry = hovered ?  dx * 0.26 : 0;
-      group.current.rotation.x = THREE.MathUtils.damp(group.current.rotation.x, rx, 6, dt);
-      group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, ry, 6, dt);
+      // Uniform tilt (aspect compensated), slightly faster
+      const aspect = width / height;
+      const dx = (targetUV.current.x - 0.5);
+      const dy = (targetUV.current.y - 0.5) * aspect;
+      const MAX = 0.30; // same cap for x & y for uniformity
+      const rx = hovered ? THREE.MathUtils.clamp(-dy * MAX * 2, -MAX, MAX) : 0;
+      const ry = hovered ? THREE.MathUtils.clamp( dx * MAX * 2, -MAX, MAX) : 0;
+      group.current.rotation.x = THREE.MathUtils.damp(group.current.rotation.x, rx, 10, dt);
+      group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, ry, 10, dt);
     }
   });
 
@@ -163,7 +168,7 @@ export default function HoloCard({
         <holoMaterial ref={material} />
       </mesh>
 
-      {/* Wireframe border above the card plane to avoid z-fighting */}
+      {/* Wireframe border (raised) */}
       <mesh position={[0, 0, 0.006]}>
         <shapeGeometry args={[(geometry as any).parameters.shapes]} />
         <meshBasicMaterial color="#b6c2cf" wireframe={true} transparent opacity={0.22} />

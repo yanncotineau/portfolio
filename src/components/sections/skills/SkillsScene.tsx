@@ -12,13 +12,13 @@ type Category = { name: string; cards: Card[] };
 /** Sizes & spacing (no overlap) */
 const CARD_W = 2.6;
 const CARD_H = 3.6;
-const H_SPACING = 3.8;   // horizontal gap between card centers
-const V_SPACING = 5.6;   // vertical gap between row centers
-const ROW_YAW   = -0.18; // slight row tilt for depth
+const H_SPACING = 3.9;   // horizontal gap between card centers
+const V_SPACING = 5.8;   // vertical gap between row centers
+const ROW_YAW   = -0.28; // stronger diagonal for row
 
-/** Fixed camera (direction never changes) */
-const CAMERA_POS  = new THREE.Vector3(-3.0, 2.6, 8.2);
-const CAMERA_EUL  = new THREE.Euler(-0.18, -0.26, 0);
+/** More diagonal & pulled-back camera (fixed orientation) */
+const CAMERA_POS  = new THREE.Vector3(-4.0, 3.6, 10.4);
+const CAMERA_EUL  = new THREE.Euler(-0.28, -0.36, 0); // pitch, yaw, roll
 const CAMERA_QUAT = new THREE.Quaternion().setFromEuler(CAMERA_EUL);
 
 export default function SkillsScene({
@@ -39,9 +39,9 @@ export default function SkillsScene({
       <Rig />
       <Suspense fallback={null}>
         <Environment preset="city" />
-        <hemisphereLight intensity={0.4} color="#ffffff" groundColor="#444" />
-        <directionalLight position={[2, 3, 2]} intensity={1.2} />
-        <fog attach="fog" args={["#0b0e1a", 7, 18]} />
+        <hemisphereLight intensity={0.45} color="#ffffff" groundColor="#444" />
+        <directionalLight position={[2.5, 3.5, 2.5]} intensity={1.25} />
+        <fog attach="fog" args={["#0b0e1a", 8, 22]} />
 
         {/* Stack = all rows. We move its Y to center the active category. */}
         <Stack
@@ -64,7 +64,7 @@ function Rig() {
     cam.current.position.copy(CAMERA_POS);
     cam.current.quaternion.copy(CAMERA_QUAT);
   });
-  return <PerspectiveCamera ref={cam} makeDefault fov={42} near={0.1} far={100} position={CAMERA_POS} quaternion={CAMERA_QUAT} />;
+  return <PerspectiveCamera ref={cam} makeDefault fov={40} near={0.1} far={120} position={CAMERA_POS} quaternion={CAMERA_QUAT} />;
 }
 
 /** Renders all rows; slides the whole stack vertically to bring the active row to center. */
@@ -85,8 +85,7 @@ function Stack({
 
   useFrame((_s, dt) => {
     if (!stack.current) return;
-    // move DOWN in world-space as category index increases
-    const targetY = activeCategory * V_SPACING;
+    const targetY = activeCategory * V_SPACING; // down in screen space = higher index
     stack.current.position.y = THREE.MathUtils.damp(stack.current.position.y, targetY, 4, dt);
   });
 
@@ -137,9 +136,9 @@ function CategoryRow({
     <group position={[0, y, 0]} rotation={[0, ROW_YAW, 0]}>
       {/* Fixed row title (doesn't move when cards slide) */}
       <Text
-        position={[-H_SPACING * 1.5, 2.4, 0]}
-        fontSize={0.32}
-        color="#cbd5e1"
+        position={[-H_SPACING * 1.6, 2.4, 0]}
+        fontSize={0.34}
+        color="#d1d5db"
         anchorX="left"
         anchorY="middle"
         characters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 /-"
